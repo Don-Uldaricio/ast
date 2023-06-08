@@ -151,12 +151,13 @@ int operate(char operation, int l, int r) {
 
 // solo evalua num op num y modifica el arbol!!!
 Node *AST::evalRecursive(Node* node) {
-    
     if (isNodeOperation(node)) {
             // evaluamos POSTORDER
         NodeOperation *op = (NodeOperation *)node;
-        Node *l = evalRecursive(op->left);
-        Node *r = evalRecursive(op->right);
+        Node *l = op->left;
+        Node *r = op->right;
+        l = evalRecursive(l);
+        r = evalRecursive(r);
         
         if (l->type == NUMBER && r->type == NUMBER) {
             NodeNumber* num = new NodeNumber(operate(op->operation, 
@@ -172,21 +173,16 @@ Node *AST::evalRecursive(Node* node) {
             else if (op->parent!=nullptr && parent->right==op) {
                 parent->right = num;
             }
-
-            //cout << "VALOR OPERACION: " << num->number << endl;
-            this->root = num;
+            if (op == this->root) {
+                this->root = num;
+            }
             return num;
         }
-        
         else {
-            
-            op->left = l;
-            op->right = r;
-            this->root = op;
             return op;
         }
     }
-    else if (node->type == NUMBER || node->type == VARIABLE) {
+    else if (isNodeNumber(node) || isNodeVariable(node)) {
         return node;
     }
     else {
@@ -197,67 +193,28 @@ Node *AST::evalRecursive(Node* node) {
 
 Node *AST::replace(Node *node, char *variables, int *values, int n) {
     if (isNodeOperation(node)) {
-        
+        NodeOperation *op = (NodeOperation *)node;
+        op->left = replace(((NodeOperation *)node)->left, variables, values, n);
+        op->right = replace(((NodeOperation *)node)->right, variables, values, n);
+        return evalRecursive(op);
     }
-}
-
-Node *AST::evalIterative(Node* node) {
-    stack<Node*> pila;
-    pila.push(node);
-    Node *current = node;
-    while (!pila.empty()) {
-        Node* top = pila.top();
-        
-        if (isNodeOperation(top)) {
-            NodeOperation* op = (NodeOperation*)top;
-            Node* l = op->left;
-            Node* r = op->right; 
-
-            if (l->type==NUMBER && r->type==NUMBER) { // ambos son numeros
-               NodeNumber* num = new NodeNumber(operate(op->operation, 
-                                                       ((NodeNumber*)l)->number, 
-                                                       ((NodeNumber*)r)->number));
-                // actualizando el link al padre
-                num->parent = op->parent;
-                NodeOperation *parent = (NodeOperation *)op->parent;
-                // actualizando el izq o derecho del padre
-                if (op->parent!=nullptr && parent->left==op) {
-                    parent->left = num;
-                }
-                else if (op->parent!=nullptr && parent->right==op) {
-                    parent->right = num;
-                }
-                current = num;
-                pila.pop();
-
+    else if (isNodeVariable(node)) {
+        NodeVariable *v = (NodeVariable *)node;
+        int i = 0;
+        while (i < n) {
+            if (v->var == variables[i]) {
+                return new NodeNumber(values[i]);
             }
-            else if ((l->type != OPERATOR) && (r->type != OPERATOR)) { // ambos son numeros o variables
-                pila.pop();
-                op->visited = true;
-                current = op;
-            }
-            else if ((l->type == OPERATOR) && (l->visited == true)) { // el izquierdo es operador y ya fue visitado
-                pila.pop();
-                op->visited = true;
-                current = op;
-            }
-            else if ((r->type == OPERATOR) && (r->visited == true)) { // el derecho es operador y ya fue visitado
-                pila.pop();
-                op->visited = true;
-                current = op;
-            }
-            else { // ambos son operadores y no han sido visitados
-                pila.push(l);
-                pila.push(r);
-            }
+            i++;
         }
-        else { // es un numero o variable
-            pila.pop();
-            current = top;
-        }
-
+        return node;
     }
-    return(current);
+    else if (isNodeNumber(node)) {
+        return node;
+    }
+    else {
+        return nullptr;
+    }
 }
 
 Node *AST::derivate(Node *node, char x) {

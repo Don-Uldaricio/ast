@@ -18,7 +18,6 @@ class AST {
 
         Node *evalRecursive(Node *node);
         Node *replace(Node *node, char *variables, int *values, int n);
-        Node *evalIterative(Node *node);
 
         bool isOperator(string token);
         bool isVariable(string token);
