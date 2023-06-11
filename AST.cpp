@@ -334,23 +334,77 @@ Node *AST::sort(Node *node) {
 }
 
 Node *AST::reduceVariable(Node *node, char x) {
-
+    if (isNodeOperation(node)) {
+        NodeOperation *auxNode = (NodeOperation *)node;
+        
+    }
 }
 
 Node *AST::simplify(Node *node) {
+    cout << "entra";
     if (isNodeOperation(node)) {
+        cout << "entra";
         // Here are all conditions for simplify polynomiums
         NodeOperation *auxNode = (NodeOperation *)node;
-        // Substracting equal nodes results in 0
-        if (auxNode->operation == '-' && equal(auxNode->left, auxNode->right)) {
-            return new NodeNumber(0);
+
+        // 1. Substract cases
+        if (auxNode->operation == '-') {
+            // 1.1. Equal nodes
+            if (equal(auxNode->left, auxNode->right)) {
+                return new NodeNumber(0);
+            }
+            // 1.2. Minus zero
+            else if (isNodeNumber(auxNode->right)) {
+                if (((NodeNumber *)auxNode->right)->number == 0) {
+                    return auxNode->left;
+                }
+            }
         }
 
+        // 2. Add cases
+        else if (auxNode->operation == '+') {
+            // 2.1. Add equal nodes
+            if (equal(auxNode->left, auxNode->right)) {
+                cout << "dsjdkj";
+                auxNode->operation = '*';
+                auxNode->left = new NodeNumber(2);
+            }
+            // 2.2. Add zero
+            else if (isNodeNumber(auxNode->left)) {
+                if (((NodeNumber *)auxNode->left)->number == 0) {
+                    return auxNode->right;
+                }
+            }
+            else if (isNodeNumber(auxNode->right)) {
+                if (((NodeNumber *)auxNode->right)->number == 0) {
+                    return auxNode->left;
+                }
+            }
+        }
+
+        // 3. Multiply cases
+        else if (auxNode->operation == '*') {
+            // 3.1. Multiply equal nodes
+            if (equal(auxNode->left, auxNode->right)) {
+                auxNode->operation = '^';
+                auxNode->right = new NodeNumber(2);
+            }
+            // 3.2. Multiply by zero
+            else if (isNodeNumber(auxNode->left)) {
+                if (((NodeNumber *)auxNode->left)->number == 0) {
+                    return new NodeNumber(0);
+                }
+            }
+            else if (isNodeNumber(auxNode->right)) {
+                if (((NodeNumber *)auxNode->right)->number == 0) {
+                    return new NodeNumber(0);
+                }
+            }
+        }
     }
-    else {
-        return node;
-    }
+    else return node;
 }
+
 
 Node *AST::clone(Node *node) {
     if (isNodeOperation(node)) {

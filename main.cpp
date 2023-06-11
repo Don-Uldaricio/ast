@@ -17,7 +17,7 @@ int main() {
     //prueba->printAST();
     prueba->root = prueba->sort(prueba->root);
     prueba->printAST();
-    NodeOperation *r = (NodeOperation *)prueba->root;
-    cout << prueba->equal(r->left, r->right);
+    prueba->root = prueba->simplify(prueba->root);
+    prueba->printAST();
 
 }
