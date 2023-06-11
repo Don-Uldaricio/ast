@@ -8,10 +8,13 @@ int main() {
     prueba->printAST();
     //prueba->derivate(prueba->root, 'x');
     //prueba->printAST();
-    char var[2] = {'x', 'y'};
-    int values[2] = {3, 1};
-    prueba->replace(prueba->root, var, values, 2);
+    //char var[2] = {'x', 'y'};
+    //int values[2] = {3, 1};
+    //prueba->replace(prueba->root, var, values, 2);
+    //prueba->printAST();
+    //prueba->root = prueba->evalRecursive(prueba->root);
+    //prueba->printAST();
+    prueba->root = prueba->sort(prueba->root);
     prueba->printAST();
-    prueba->root = prueba->evalRecursive(prueba->root);
 
 }

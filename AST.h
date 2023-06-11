@@ -15,6 +15,8 @@ class AST {
         void relinkNode(Node *child, Node *parent); // NO HECHO AUN
         bool equal(Node *n1, Node *n2);
 
+        Node *sort(Node *node);
+
         Node *evalRecursive(Node *node);
         Node *replace(Node *node, char *variables, int *values, int n);
         Node *derivate(Node *node, char var);

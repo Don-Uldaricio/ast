@@ -307,6 +307,26 @@ bool AST::equal(Node *n1, Node *n2) {
     }
 }
 
+Node *AST::sort(Node *node) {
+    if (isNodeOperation(node)) {
+        NodeOperation *auxNode = (NodeOperation *)node;
+        if ((auxNode->operation == '*' || auxNode->operation == '+') 
+        && isNodeVariable(auxNode->left) && isNodeNumber(auxNode->right)) {
+            NodeVariable *auxVar = new NodeVariable(((NodeVariable *)auxNode->left)->var);
+            auxNode->left = auxNode->right;
+            auxNode->right = auxVar;
+        }
+        else {
+            auxNode->left = sort(auxNode->left);
+            auxNode->right = sort(auxNode->right);
+        }
+        return node;
+    }
+    else {
+        return node;
+    }
+}
+
 
 Node *AST::simplify(Node *node) {
 
