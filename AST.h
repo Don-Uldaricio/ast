@@ -12,12 +12,15 @@ class AST {
         Node *root;
 
         AST(string fileName);
-        Node *derivate(Node *node, char var);
-        Node *clone(Node *node);
-        void relinkNode(Node *child, Node *parent);
+        void relinkNode(Node *child, Node *parent); // NO HECHO AUN
+        bool equal(Node *n1, Node *n2);
 
         Node *evalRecursive(Node *node);
         Node *replace(Node *node, char *variables, int *values, int n);
+        Node *derivate(Node *node, char var);
+        Node *simplify(Node *node);
+
+        Node *clone(Node *node);
 
         bool isOperator(string token);
         bool isVariable(string token);

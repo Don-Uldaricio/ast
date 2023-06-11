@@ -97,13 +97,6 @@ AST::AST(string fileName) {
         cout << "Could not read line" << endl;
         exit(1);
     }
-
-    //cout << "Evaluacion: " << endl;
-//    cout << evalInt(root) << endl;
-//    root = evalRecursive(root);
-    //this->root = evalIterative(root);    
-    //this->root->print();  
-
     file.close();
 }
 
@@ -242,14 +235,12 @@ Node *AST::derivate(Node *node, char x) {
             oldRoot->left = derivate(leftClone, x);
             rightMult->right = derivate(rightClone, x);
             
-            /*
             leftMult->parent = newParent;
             rightMult->parent = newParent;
             leftClone->parent = node;
             leftClone->parent = rightMult;
             oldRoot->left->parent = rightMult;
             newParent->parent = leftMult->parent;
-            */
             
             this->root = newParent;
 
@@ -292,6 +283,33 @@ Node *AST::derivate(Node *node, char x) {
     else {
         return nullptr;
     }
+}
+
+bool AST::equal(Node *n1, Node *n2) {
+    if (isNodeOperation(n1) && isNodeOperation(n2)) {
+        NodeOperation *aux1 = (NodeOperation *)n1;
+        NodeOperation *aux2 = (NodeOperation *)n2;
+        if (aux1->operation == aux2->operation) {
+            return (equal(aux1->left, aux2->left) && equal(aux1->right, aux2->right));
+        }
+        else {
+            return false;
+        }
+    }
+    else if (isNodeNumber(n1) && isNodeNumber(n2)) {
+        return ((NodeNumber *)n1)->number == ((NodeNumber *)n2)->number;
+    }
+    else if (isNodeVariable(n1) && isNodeVariable(n2)) {
+        return ((NodeVariable *)n1)->var == ((NodeVariable *)n2)->var;
+    }
+    else {
+        return false;
+    }
+}
+
+
+Node *AST::simplify(Node *node) {
+
 }
 
 Node *AST::clone(Node *node) {
