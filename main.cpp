@@ -1,4 +1,5 @@
 #include "AST.h"
+#include "NodeOperation.h"
 
 using namespace std;
 
@@ -16,5 +17,7 @@ int main() {
     //prueba->printAST();
     prueba->root = prueba->sort(prueba->root);
     prueba->printAST();
+    NodeOperation *r = (NodeOperation *)prueba->root;
+    cout << prueba->equal(r->left, r->right);
 
 }

@@ -218,7 +218,7 @@ Node *AST::derivate(Node *node, char x) {
             oldRoot->left = derivate(oldRoot->left, x);
             oldRoot->right = derivate(oldRoot->right, x);
             this->root = oldRoot;
-            return node;
+            return evalRecursive(node);
         }
         else if (op == '*') {
             NodeOperation *newParent = new NodeOperation('+');
@@ -244,7 +244,7 @@ Node *AST::derivate(Node *node, char x) {
             
             this->root = newParent;
 
-            return newParent;
+            return evalRecursive(newParent);
         }
         else if (op == '^') {
             Node *leftClone = clone(oldRoot->left);
@@ -260,7 +260,7 @@ Node *AST::derivate(Node *node, char x) {
 
             this->root = newParent;
 
-            return newParent;
+            return evalRecursive(newParent);
         }
         else {
             return nullptr;
@@ -310,11 +310,17 @@ bool AST::equal(Node *n1, Node *n2) {
 Node *AST::sort(Node *node) {
     if (isNodeOperation(node)) {
         NodeOperation *auxNode = (NodeOperation *)node;
-        if ((auxNode->operation == '*' || auxNode->operation == '+') 
-        && isNodeVariable(auxNode->left) && isNodeNumber(auxNode->right)) {
+        if ((auxNode->operation == '*' || auxNode->operation == '+') && 
+            isNodeVariable(auxNode->left) && isNodeNumber(auxNode->right)) {
             NodeVariable *auxVar = new NodeVariable(((NodeVariable *)auxNode->left)->var);
             auxNode->left = auxNode->right;
             auxNode->right = auxVar;
+        }
+        else if (isNodeOperation(auxNode->left) && isNodeNumber(auxNode->right) && 
+                auxNode->operation == '*') {
+            NodeNumber *auxNumber = new NodeNumber(((NodeNumber *)auxNode->right)->number);
+            auxNode->right = sort(auxNode->left);
+            auxNode->left = auxNumber;
         }
         else {
             auxNode->left = sort(auxNode->left);
@@ -327,9 +333,23 @@ Node *AST::sort(Node *node) {
     }
 }
 
+Node *AST::reduceVariable(Node *node, char x) {
+
+}
 
 Node *AST::simplify(Node *node) {
+    if (isNodeOperation(node)) {
+        // Here are all conditions for simplify polynomiums
+        NodeOperation *auxNode = (NodeOperation *)node;
+        // Substracting equal nodes results in 0
+        if (auxNode->operation == '-' && equal(auxNode->left, auxNode->right)) {
+            return new NodeNumber(0);
+        }
 
+    }
+    else {
+        return node;
+    }
 }
 
 Node *AST::clone(Node *node) {

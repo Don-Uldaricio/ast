@@ -21,6 +21,7 @@ class AST {
         Node *replace(Node *node, char *variables, int *values, int n);
         Node *derivate(Node *node, char var);
         Node *simplify(Node *node);
+        Node *reduceVariable(Node *node, char x);
 
         Node *clone(Node *node);
 
