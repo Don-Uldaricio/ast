@@ -315,12 +315,14 @@ Node *AST::sort(Node *node) {
             NodeVariable *auxVar = new NodeVariable(((NodeVariable *)auxNode->left)->var);
             auxNode->left = auxNode->right;
             auxNode->right = auxVar;
+            auxVar->parent = auxNode;
         }
         else if (isNodeOperation(auxNode->left) && isNodeNumber(auxNode->right) && 
                 auxNode->operation == '*') {
             NodeNumber *auxNumber = new NodeNumber(((NodeNumber *)auxNode->right)->number);
             auxNode->right = sort(auxNode->left);
             auxNode->left = auxNumber;
+            auxNumber->parent = auxNode;
         }
         else {
             auxNode->left = sort(auxNode->left);
@@ -333,19 +335,167 @@ Node *AST::sort(Node *node) {
     }
 }
 
-Node *AST::reduceVariable(Node *node, char x) {
-    if (isNodeOperation(node)) {
-        NodeOperation *auxNode = (NodeOperation *)node;
-        
+void AST::deleteVarNode(Node *node, Node *parent) {
+    if (((NodeOperation *)parent)->left == node) {
+        delete node;
+        parent = ((NodeOperation *)parent)->right;
+    }
+    else {
+        delete node;
+        parent = ((NodeOperation *)parent)->left;
     }
 }
 
-Node *AST::simplify(Node *node) {
-    cout << "entra";
+bool AST::isVarMultiply(Node *node, char x) {
     if (isNodeOperation(node)) {
-        cout << "entra";
+        NodeOperation *auxOp = (NodeOperation *)node;
+        if (auxOp->operation == '*' && isNodeNumber(auxOp->left) && isNodeVariable(auxOp->right)) {
+            return (((NodeVariable *)auxOp->right)->var == x);
+        }
+    }
+    return false;
+}
+
+int AST::countVar(Node *node, char x) {
+    if (isNodeOperation(node)) {
+        NodeOperation *auxNode = (NodeOperation *)node;
+        if (auxNode->operation == '+') {
+            return countVar(auxNode->left, x) + countVar(auxNode->right, x);
+        }
+        else if (auxNode->operation == '*') {
+            if (isNodeNumber(auxNode->left) && isNodeVariable(auxNode->right)) {
+                if (((NodeVariable *)auxNode->right)->var == x) {
+                    return ((NodeNumber *)auxNode->left)->number;
+                }
+            }
+        }
+    }
+    else if (isNodeVariable(node)) {
+        if (((NodeVariable *)node)->var == x) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
+    if (isNodeOperation(node)) {
+        NodeOperation *auxNode = (NodeOperation *)node;
+        if (auxNode->operation == '+') {
+            auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
+            auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
+            // If left or right node is the varNode
+            if (auxNode->left == varNode || auxNode->right == varNode) {
+                cout << "tremenda volá\n";
+                NodeOperation *newOp = new NodeOperation('*');
+                newOp->left = new NodeNumber(n);
+                newOp->right = new NodeVariable(x);
+                newOp->left->parent = newOp;
+                newOp->right->parent = newOp;
+                newOp->right->visited = true;
+                if (auxNode->left == varNode) {
+                    auxNode->left = newOp;
+                    newOp->parent = node->parent;
+                    auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
+                }
+                else if (auxNode->right == varNode) {
+                    auxNode->right = newOp;
+                    newOp->parent = node->parent;
+                    auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
+                }
+            }
+            else if (isNodeVariable(auxNode->left) && auxNode->left != varNode) {
+                if (((NodeVariable *)auxNode->left)->var == x) {
+                    node = auxNode->right;
+                    return node;
+                }
+            }
+            else if (isNodeVariable(auxNode->right) && auxNode->right != varNode) {
+                if (((NodeVariable *)auxNode->right)->var == x) {
+                    node = auxNode->left;
+                    return node;
+                }
+            }
+            else if (isNodeOperation(auxNode->left)) {
+                if (isVarMultiply(auxNode->left, x)) {
+                    node = auxNode->right;
+                }
+            }
+            else if (isNodeOperation(auxNode->right)) {
+                if (isVarMultiply(auxNode->right, x)) {
+                    node = auxNode->left;
+                }
+            }
+            return auxNode;
+        }
+        else {
+            auxNode->left = reduceVariable(auxNode->left, searchVariable(auxNode->left, x), countVar(auxNode->left, x), x);
+            auxNode->right = reduceVariable(auxNode->right, searchVariable(auxNode->right, x), countVar(auxNode->right, x), x);
+        }
+        return auxNode;
+    }
+    else if (isNodeVariable(node)) {
+        if (node == varNode && node->visited == false) {
+            NodeOperation *newOp = new NodeOperation('*');
+            newOp->left = new NodeNumber(n);
+            newOp->right = new NodeVariable(x);
+            newOp->left->parent = newOp;
+            newOp->right->parent = newOp;
+            newOp->right->visited = true;
+            if (((NodeOperation *)node->parent)->right == node) {
+                ((NodeOperation *)node->parent)->right = newOp;
+                newOp->parent = node->parent;
+            }
+            else if (((NodeOperation *)node->parent)->left == node) {
+                ((NodeOperation *)node->parent)->left = newOp;
+                newOp->parent = node->parent;
+            }
+            return newOp;
+        }
+        else if (((NodeVariable *)node)->var == x) {
+            if (((NodeOperation *)node->parent)->left == node) {
+                node->parent = ((NodeOperation *)node->parent)->right;
+            }
+            else if (((NodeOperation *)node->parent)->right == node) {
+                node->parent = ((NodeOperation *)node->parent)->left;
+            }
+        }
+        return node;
+    }
+    return node;
+}
+
+Node *AST::searchVariable(Node *node, char x) {
+    if (isNodeOperation(node)) {
+        if (((NodeOperation *)node)->operation == '+') {
+            NodeOperation *auxNode = (NodeOperation *)node;
+            Node *l = searchVariable(auxNode->left, x);
+            Node *r = searchVariable(auxNode->right, x);
+            if (l != nullptr) {
+                return l;
+            }
+            else if (r != nullptr) {
+                return r;
+            }
+        }
+    }
+    else if (isNodeVariable(node)) {
+        if (((NodeVariable *)node)->var == x) {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+Node *AST::simplify(Node *node) {
+    node = sort(node);
+    node = reduceVariable(node, searchVariable(node, 'x'), countVar(node, 'x'), 'x');
+    
+    if (isNodeOperation(node)) {
         // Here are all conditions for simplify polynomiums
         NodeOperation *auxNode = (NodeOperation *)node;
+        auxNode->left = simplify(auxNode->left);
+        auxNode->right = simplify(auxNode->right);
 
         // 1. Substract cases
         if (auxNode->operation == '-') {
@@ -365,7 +515,6 @@ Node *AST::simplify(Node *node) {
         else if (auxNode->operation == '+') {
             // 2.1. Add equal nodes
             if (equal(auxNode->left, auxNode->right)) {
-                cout << "dsjdkj";
                 auxNode->operation = '*';
                 auxNode->left = new NodeNumber(2);
             }
@@ -388,6 +537,7 @@ Node *AST::simplify(Node *node) {
             if (equal(auxNode->left, auxNode->right)) {
                 auxNode->operation = '^';
                 auxNode->right = new NodeNumber(2);
+                return auxNode;
             }
             // 3.2. Multiply by zero
             else if (isNodeNumber(auxNode->left)) {
@@ -402,7 +552,7 @@ Node *AST::simplify(Node *node) {
             }
         }
     }
-    else return node;
+    return node;
 }
 
 

@@ -21,13 +21,18 @@ class AST {
         Node *replace(Node *node, char *variables, int *values, int n);
         Node *derivate(Node *node, char var);
         Node *simplify(Node *node);
-        Node *reduceVariable(Node *node, char x);
+        Node *reduceVariable(Node *node, Node *varNode, int n, char x);
+        void deleteVarNode(Node *node, Node *parent);
+        Node *searchVariable(Node *node, char x);
+        int countVar(Node *node, char x);
 
         Node *clone(Node *node);
 
         bool isOperator(string token);
         bool isVariable(string token);
         bool isNumber(string token);
+
+        bool isVarMultiply(Node *node, char x);
 
         bool isNodeOperation(Node *node);
         bool isNodeVariable(Node *node);

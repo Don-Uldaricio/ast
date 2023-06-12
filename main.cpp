@@ -13,11 +13,11 @@ int main() {
     //int values[2] = {3, 1};
     //prueba->replace(prueba->root, var, values, 2);
     //prueba->printAST();
-    //prueba->root = prueba->evalRecursive(prueba->root);
-    //prueba->printAST();
-    prueba->root = prueba->sort(prueba->root);
-    prueba->printAST();
     prueba->root = prueba->simplify(prueba->root);
     prueba->printAST();
-
+    //cout << prueba->countVar(prueba->root, 'x') << endl;
+    //prueba->root = prueba->reduceVariable(prueba->root, prueba->searchVariable(prueba->root, 'x'), prueba->countVar(prueba->root, 'x'),'x');
+    //prueba->printAST();
+    //prueba->root = prueba->evalRecursive(prueba->root);
+    //prueba->printAST();
 }
