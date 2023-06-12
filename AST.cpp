@@ -217,32 +217,33 @@ Node *AST::derivate(Node *node, char x) {
         if (op == '+' || op == '-') {
             oldRoot->left = derivate(oldRoot->left, x);
             oldRoot->right = derivate(oldRoot->right, x);
-            this->root = oldRoot;
             return evalRecursive(node);
         }
         else if (op == '*') {
             NodeOperation *newParent = new NodeOperation('+');
             NodeOperation *leftMult = oldRoot;
             NodeOperation *rightMult = new NodeOperation('*');
-
-            newParent->left = leftMult;
-            newParent->right = rightMult;
-            
             Node *leftClone = clone(oldRoot->left);
             Node *rightClone = clone(oldRoot->right);
 
-            rightMult->left = oldRoot->left;
-            oldRoot->left = derivate(leftClone, x);
-            rightMult->right = derivate(rightClone, x);
-            
+            // Asign new parents
+            newParent->parent = node->parent;
             leftMult->parent = newParent;
             rightMult->parent = newParent;
-            leftClone->parent = node;
-            leftClone->parent = rightMult;
+            leftClone->parent = leftMult;
+            rightClone->parent = rightMult;
             oldRoot->left->parent = rightMult;
-            newParent->parent = leftMult->parent;
-            
-            this->root = newParent;
+
+            // Asign new childs of operation add nodes
+            newParent->left = leftMult;
+            newParent->right = rightMult;
+            leftMult->left = derivate(leftClone, x);
+            rightMult->right = derivate(rightClone, x);
+            rightMult->left = oldRoot->left;
+
+            if (node == this->root) {
+                this->root = newParent;
+            }
 
             return evalRecursive(newParent);
         }
@@ -252,13 +253,24 @@ Node *AST::derivate(Node *node, char x) {
             NodeOperation *auxMult = new NodeOperation('*');
             NodeNumber *newExp = new NodeNumber((((NodeNumber *)oldRoot->right)->number) - 1);
 
+            // Asign new parents
+            newParent->parent = oldRoot->parent;
+            oldRoot->right->parent = newParent;
+            auxMult->parent = newParent;
+            oldRoot->parent = auxMult;
+            leftClone->parent = auxMult;
+            newExp->parent = oldRoot;
+
+            // Asign new childs
             newParent->left = oldRoot->right;
             newParent->right = auxMult;
             auxMult->left = oldRoot;
             auxMult->right = derivate(leftClone, x);
             oldRoot->right = newExp;
 
-            this->root = newParent;
+            if (node == this->root) {
+                this->root = newParent;
+            }
 
             return evalRecursive(newParent);
         }
@@ -560,8 +572,6 @@ Node *AST::simplify(Node *node) {
             clonedNode = clone(node);
         }
     }
-    //node = reduceAddNumbers(node, firstAddNumber(node), sumLevelNumbers(node));
-    
     if (isNodeOperation(node)) {
         // Here are all conditions for simplify polynomiums
         NodeOperation *auxNode = (NodeOperation *)node;
@@ -645,10 +655,6 @@ Node *AST::clone(Node *node) {
     else {
         return nullptr;
     }
-}
-
-void AST::relinkNode(Node *child, Node *parent) {
-
 }
 
 void AST::printAST() { 

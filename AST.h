@@ -12,9 +12,8 @@ class AST {
         Node *root;
 
         AST(string fileName);
-        void relinkNode(Node *child, Node *parent); // NO HECHO AUN
+        
         bool equal(Node *n1, Node *n2);
-
         Node *sort(Node *node);
 
         Node *evalRecursive(Node *node);
