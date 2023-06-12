@@ -378,45 +378,104 @@ int AST::countVar(Node *node, char x) {
     return 0;
 }
 
+int AST::sumLevelNumbers(Node *node) {
+    if (isNodeOperation(node)) {
+        NodeOperation *auxNode = (NodeOperation *)node;
+        if (auxNode->operation == '+') {
+            return sumLevelNumbers(auxNode->left) + sumLevelNumbers(auxNode->right);
+        }
+    }
+    else if (isNodeNumber(node)) {
+        return ((NodeNumber *)node)->number;
+    }
+    return 0;
+}
+
+Node *AST::firstAddNumber(Node *node) {
+    if (isNodeOperation(node)) {
+        if (((NodeOperation *)node)->operation == '+') {
+            NodeOperation *auxNode = (NodeOperation *)node;
+            Node *l = firstAddNumber(auxNode->left);
+            Node *r = firstAddNumber(auxNode->right);
+            if (l != nullptr) {
+                return l;
+            }
+            else if (r != nullptr) {
+                return r;
+            }
+        }
+    }
+    else if (isNodeNumber(node)) {
+        return node;
+    }
+    return nullptr;
+}
+
+Node *AST::reduceAddNumbers(Node *node, Node *numNode, int sum) {
+    node = evalRecursive(node);
+    if (isNodeOperation(node)) {
+        NodeOperation *auxNode = (NodeOperation *)node;
+        if (auxNode->operation == '+') {
+            if (isNodeNumber(auxNode->left) && auxNode->left != numNode) {
+                if (auxNode == this->root) {
+                    this->root = auxNode->right;
+                }
+                node = auxNode->right;
+                node = reduceAddNumbers(node, numNode, sum);
+                return node;
+            }
+            else if (isNodeNumber(auxNode->right) && auxNode->right != numNode) {
+                if (auxNode == this->root) {
+                    this->root = auxNode->left;
+                }
+                node = auxNode->left;
+                node = reduceAddNumbers(node, numNode, sum);
+                return node;
+            }
+            auxNode->left = reduceAddNumbers(auxNode->left, numNode, sum);
+            auxNode->right = reduceAddNumbers(auxNode->right, numNode, sum);
+            return auxNode;
+        }
+        else {
+            auxNode->left = reduceAddNumbers(auxNode->left, firstAddNumber(auxNode->left), sumLevelNumbers(auxNode->left));
+            auxNode->right = reduceAddNumbers(auxNode->right, firstAddNumber(auxNode->right), sumLevelNumbers(auxNode->right));
+        }
+        return node;
+    }
+    else if (isNodeNumber(node)) {
+        if (node == numNode) {
+            ((NodeNumber *)node)->number = sum;
+        }
+    }
+    return node;
+}
+
 Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
     if (isNodeOperation(node)) {
         NodeOperation *auxNode = (NodeOperation *)node;
         if (auxNode->operation == '+') {
-            auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
-            auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
-            // If left or right node is the varNode
-            if (auxNode->left == varNode || auxNode->right == varNode) {
-                cout << "tremenda volá\n";
-                NodeOperation *newOp = new NodeOperation('*');
-                newOp->left = new NodeNumber(n);
-                newOp->right = new NodeVariable(x);
-                newOp->left->parent = newOp;
-                newOp->right->parent = newOp;
-                newOp->right->visited = true;
-                if (auxNode->left == varNode) {
-                    auxNode->left = newOp;
-                    newOp->parent = node->parent;
-                    auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
-                }
-                else if (auxNode->right == varNode) {
-                    auxNode->right = newOp;
-                    newOp->parent = node->parent;
-                    auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
-                }
-            }
-            else if (isNodeVariable(auxNode->left) && auxNode->left != varNode) {
+            if (isNodeVariable(auxNode->left) && auxNode->left != varNode) {
                 if (((NodeVariable *)auxNode->left)->var == x) {
+                    if (auxNode == this->root) {
+                        this->root = auxNode->right;
+                    }
                     node = auxNode->right;
                     return node;
                 }
             }
             else if (isNodeVariable(auxNode->right) && auxNode->right != varNode) {
                 if (((NodeVariable *)auxNode->right)->var == x) {
+                    if (auxNode == this->root) {
+                        this->root = auxNode->left;
+                    }
                     node = auxNode->left;
                     return node;
                 }
             }
-            else if (isNodeOperation(auxNode->left)) {
+            auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
+            auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
+            // If left or right node is the varNode
+            if (isNodeOperation(auxNode->left)) {
                 if (isVarMultiply(auxNode->left, x)) {
                     node = auxNode->right;
                 }
@@ -489,7 +548,19 @@ Node *AST::searchVariable(Node *node, char x) {
 
 Node *AST::simplify(Node *node) {
     node = sort(node);
-    node = reduceVariable(node, searchVariable(node, 'x'), countVar(node, 'x'), 'x');
+    Node *clonedNode = clone(node);
+    bool same = false;
+    while (!same) {
+        node = reduceVariable(node, searchVariable(node, 'x'), countVar(node, 'x'), 'x');
+        node = reduceAddNumbers(node, firstAddNumber(node), sumLevelNumbers(node));
+        if (equal(clonedNode, node)) {
+            same = true;
+        }
+        else {
+            clonedNode = clone(node);
+        }
+    }
+    //node = reduceAddNumbers(node, firstAddNumber(node), sumLevelNumbers(node));
     
     if (isNodeOperation(node)) {
         // Here are all conditions for simplify polynomiums

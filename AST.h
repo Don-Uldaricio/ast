@@ -22,6 +22,9 @@ class AST {
         Node *derivate(Node *node, char var);
         Node *simplify(Node *node);
         Node *reduceVariable(Node *node, Node *varNode, int n, char x);
+        Node *reduceAddNumbers(Node *node, Node *numNode, int sum);
+        int sumLevelNumbers(Node *node);
+        Node *firstAddNumber(Node *node);
         void deleteVarNode(Node *node, Node *parent);
         Node *searchVariable(Node *node, char x);
         int countVar(Node *node, char x);

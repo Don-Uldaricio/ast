@@ -16,8 +16,10 @@ int main() {
     prueba->root = prueba->simplify(prueba->root);
     prueba->printAST();
     //cout << prueba->countVar(prueba->root, 'x') << endl;
+    //prueba->root = prueba->evalRecursive(prueba->root);
+    //prueba->printAST();
     //prueba->root = prueba->reduceVariable(prueba->root, prueba->searchVariable(prueba->root, 'x'), prueba->countVar(prueba->root, 'x'),'x');
     //prueba->printAST();
-    //prueba->root = prueba->evalRecursive(prueba->root);
+    //prueba->root = prueba->reduceAddNumbers(prueba->root, prueba->firstAddNumber(prueba->root), prueba->sumLevelNumbers(prueba->root));
     //prueba->printAST();
 }
