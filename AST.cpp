@@ -653,7 +653,21 @@ Node *AST::simplify(Node *node) {
                 auxNode->right = new NodeNumber(2);
                 return auxNode;
             }
-            // 3.2. Multiply by zero
+            // 3.2. Multiply by one
+            else if (isNodeNumber(auxNode->left)) {
+                cout << "multiply por 1...." << endl;
+                if (((NodeNumber *)auxNode->left)->number == 1) {
+                    node = auxNode->right;
+                    return node;
+                }
+            }
+            else if (isNodeNumber(auxNode->right)) {
+                if (((NodeNumber *)auxNode->right)->number == 1) {
+                    node = auxNode->left;
+                    return node;
+                }
+            }
+            // 3.3. Multiply by zero
             else if (isNodeNumber(auxNode->left)) {
                 if (((NodeNumber *)auxNode->left)->number == 0) {
                     return new NodeNumber(0);
