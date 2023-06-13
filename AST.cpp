@@ -217,9 +217,13 @@ Node *AST::derivate(Node *node, char x) {
         if (op == '+' || op == '-') {
             oldRoot->left = derivate(oldRoot->left, x);
             oldRoot->right = derivate(oldRoot->right, x);
-            return evalRecursive(node);
+            if (node == this->root) {
+                this->root = node;
+            }
+            return evalRecursive(oldRoot);
         }
         else if (op == '*') {
+            node->print(); cout << endl;
             NodeOperation *newParent = new NodeOperation('+');
             NodeOperation *leftMult = oldRoot;
             NodeOperation *rightMult = new NodeOperation('*');
@@ -237,9 +241,11 @@ Node *AST::derivate(Node *node, char x) {
             // Asign new childs of operation add nodes
             newParent->left = leftMult;
             newParent->right = rightMult;
-            leftMult->left = derivate(leftClone, x);
-            rightMult->right = derivate(rightClone, x);
             rightMult->left = oldRoot->left;
+            oldRoot->left = derivate(leftClone, x);
+            rightMult->right = derivate(rightClone, x);
+            
+            newParent->print(); cout << endl;
 
             if (node == this->root) {
                 this->root = newParent;
@@ -484,19 +490,30 @@ Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
                     return node;
                 }
             }
-            auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
-            auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
-            // If left or right node is the varNode
-            if (isNodeOperation(auxNode->left)) {
-                if (isVarMultiply(auxNode->left, x)) {
-                    node = auxNode->right;
+            else if (isNodeOperation(auxNode->left)) {
+                NodeOperation *auxOp = (NodeOperation *)auxNode->left;
+                if (auxOp->operation == '*' && isNodeNumber(auxOp->left) && isNodeVariable(auxOp->right)) {
+                    NodeVariable *auxVar = (NodeVariable *)auxOp->right;
+                    if (auxVar->var == x) {
+                        if (auxVar == varNode) {
+                            ((NodeNumber *)auxOp->left)->number = n;
+                        }
+                    }
                 }
             }
             else if (isNodeOperation(auxNode->right)) {
-                if (isVarMultiply(auxNode->right, x)) {
-                    node = auxNode->left;
+                NodeOperation *auxOp = (NodeOperation *)auxNode->right;
+                if (auxOp->operation == '*' && isNodeNumber(auxOp->left) && isNodeVariable(auxOp->right)) {
+                    NodeVariable *auxVar = (NodeVariable *)auxOp->right;
+                    if (auxVar->var == x) {
+                        if (auxVar == varNode) {
+                            ((NodeNumber *)auxOp->left)->number = n;
+                        }
+                    }
                 }
             }
+            auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
+            auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
             return auxNode;
         }
         else {
@@ -540,6 +557,22 @@ Node *AST::searchVariable(Node *node, char x) {
     if (isNodeOperation(node)) {
         if (((NodeOperation *)node)->operation == '+') {
             NodeOperation *auxNode = (NodeOperation *)node;
+            if (isNodeOperation(auxNode->left)) {
+                NodeOperation *auxOp = (NodeOperation *)auxNode->left;
+                if (auxOp->operation == '*' && isNodeVariable(auxOp->right) && isNodeNumber(auxOp->left)) {
+                    if (((NodeVariable *)auxOp->right)->var == x) {
+                        return (NodeVariable *)auxOp->right;
+                    }
+                }
+            }
+            else if (isNodeOperation(auxNode->right)) {
+                NodeOperation *auxOp = (NodeOperation *)auxNode->right;
+                if (auxOp->operation == '*' && isNodeVariable(auxOp->right) && isNodeNumber(auxOp->left)) {
+                    if (((NodeVariable *)auxOp->right)->var == x) {
+                        return (NodeVariable *)auxOp->right;
+                    }
+                }
+            }
             Node *l = searchVariable(auxNode->left, x);
             Node *r = searchVariable(auxNode->right, x);
             if (l != nullptr) {
