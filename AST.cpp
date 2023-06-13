@@ -11,9 +11,10 @@
 #include "NodeNumber.h"
 #include "NodeVariable.h"
 
-// sstream es un stream de caracteres
 using namespace std;
 
+/// @brief Constructor of AST that initializes the root attribute by reading the name file.
+/// @param fileName String that represents the file name.
 AST::AST(string fileName) {
     ifstream file(fileName);
     if (!file.is_open()) {
@@ -32,46 +33,34 @@ AST::AST(string fileName) {
     stack<NodeOperation*> pila;
 
     if (getline(file, line, '\n')) {
-        //cout << line << endl;
         ss << line;
-        // si stream ss es "+ * - 1 2 3"
-        // el primer get line obtiene "+" 
         while(getline(ss, token, ' ')) {
-            //cout << token << endl;
-
-            // 1) creamos el nodo dependiendo del token
+            // 1. Create Node depending on the token type
             if (isOperator(token)) {
-                //cout << "Es un operador" << token << endl;
                 node = new NodeOperation(token[0]);
                 if (!pila.empty()) { 
                     ((NodeOperation*)node)->parent = pila.top();
                 } else {
                     ((NodeOperation*)node)->parent = nullptr;
                 }
-
             }
             else if (isNumber(token)) {
-                //cout << "Es un numero: " << token << endl;
                 int valor = stoi(token);
                 node = new NodeNumber(valor);
 
             }
             else if (isVariable(token)) {
-                //cout << "Es un identificador: " << token << endl;
                 char name= token[0];
                 node = new NodeVariable(name);
             }
-
-            // 2) si es el primer nodo es la raiz
+            // 2. If it's first Node it's root
             if (this->root == nullptr) {
                 this->root = node;
             }
-
-            // 3) dependiendo del top del stack se agrega a la izquierda o derecha
+            // 3. Depending on the stack top, it's add on the left or right
             if (!pila.empty()) {
-                // asignacion del padre
+                // Parent asignation
                 node->parent = pila.top();    
-
                 if (pila.top()->left == nullptr) {  
                     pila.top()->left = node;
                 } 
@@ -84,13 +73,11 @@ AST::AST(string fileName) {
                     exit(1);
                 }
             }
-
-            // 4) si es un operador se agrega a la pila
+            // 4. If it's an operator it's added to pill
             if (node->type == OPERATOR) {
                     pila.push((NodeOperation*)node);
                 
             }
-
         }
     }
     else {
@@ -100,32 +87,53 @@ AST::AST(string fileName) {
     file.close();
 }
 
-
+/// @brief Decide if the read token it's an operator.
+/// @param token Read string
+/// @return True if it's an operator; false if it's not.
 bool AST::isOperator(string token) {
     return token == "+" || token == "-" || token == "*" || token == "^";
 }
 
+/// @brief Decide if read token it's a number.
+/// @param token Read string
+/// @return True if it's a number; false if it's not.
 bool AST::isNumber(string token) {
     return token[0] >= '0' && token[0] <= '9';
 }
 
+/// @brief Decide if read token it's a variable.
+/// @param token Read string
+/// @return True if it's a variable (character). False if it's not.
 bool AST::isVariable(string token) {
     return (token[0] >= 'a' && token[0] <= 'z') || (token[0] >= 'A' && token[0] <= 'Z');
 }
 
+/// @brief Decide if the read Node it's a Operation Node.
+/// @param node Read Node
+/// @return True if it's. False if it's not.
 bool AST::isNodeOperation(Node *node) {
     return node->type == OPERATOR;
 }
 
+/// @brief Decide if the read Node it's a Variable Node.
+/// @param node Read Node
+/// @return True if it's. False if it's not.
 bool AST::isNodeVariable(Node *node) {
     return node->type == VARIABLE;
 }
 
+/// @brief Decide if the read Node it's a Number Node.
+/// @param node Read Node
+/// @return True if it's. False if it's not.
 bool AST::isNodeNumber(Node *node) {
     return node->type == NUMBER;
 }
 
-// Solo cuando ambos operandos son numeros
+/// @brief Operate two numbers.
+/// @param operation Operation character (+, -, *, ^)
+/// @param l First number
+/// @param r Second number
+/// @return Integer result of operate the two numbers.
 int operate(char operation, int l, int r) {
         switch(operation) {
             case '+': //
@@ -142,10 +150,12 @@ int operate(char operation, int l, int r) {
         }
 }
 
-// solo evalua num op num y modifica el arbol!!!
+/// @brief Evaluate recursively all the operations with numbers Nodes.
+/// @param node Root Node.
+/// @return Node with the result after operate all numbers Nodes.
 Node *AST::evalRecursive(Node* node) {
     if (isNodeOperation(node)) {
-            // evaluamos POSTORDER
+        // Post-order evaluate
         NodeOperation *op = (NodeOperation *)node;
         Node *l = op->left;
         Node *r = op->right;
@@ -156,10 +166,10 @@ Node *AST::evalRecursive(Node* node) {
             NodeNumber* num = new NodeNumber(operate(op->operation, 
                                                        ((NodeNumber*)l)->number, 
                                                        ((NodeNumber*)r)->number));
-            // actualizando el link al padre
+            // Updating parent link
             num->parent = op->parent;
             NodeOperation *parent = (NodeOperation *)op->parent;
-            // actualizando el izq o derecho del padre
+            // Updating left or right parent child
             if (op->parent!=nullptr && parent->left==op) {
                 parent->left = num;
             }
@@ -179,11 +189,18 @@ Node *AST::evalRecursive(Node* node) {
         return node;
     }
     else {
-        cout << "Error: se encontro algo distinto a operador o numero o variable" << endl;
+        cout << "Error: Indefined type of Node." << endl;
         exit(1);
     }
 }
 
+/// @brief Replace all the Variable Nodes that match with the selected variable 
+///        with the asigned number.
+/// @param node Root Node.
+/// @param variables Array with the selected variables to replace.
+/// @param values Array with the asigned values to the variables.
+/// @param n Number of variables.
+/// @return Node with the result after replace the variables.
 Node *AST::replace(Node *node, char *variables, int *values, int n) {
     if (isNodeOperation(node)) {
         NodeOperation *op = (NodeOperation *)node;
@@ -210,13 +227,19 @@ Node *AST::replace(Node *node, char *variables, int *values, int n) {
     }
 }
 
-Node *AST::derivate(Node *node, char x) {
+/// @brief derive the AST with respect to a variable.
+/// @param node Root Node.
+/// @param x Variable (char) to derive.
+/// @return Root Node after derive the AST.
+Node *AST::derive(Node *node, char x) {
+    // Derive an Operation Node
     if (isNodeOperation(node)) {
         char op = ((NodeOperation *)node)->operation;
         NodeOperation *oldRoot = (NodeOperation *)node;
+        // Derive cases (+, -, *, ^)
         if (op == '+' || op == '-') {
-            oldRoot->left = derivate(oldRoot->left, x);
-            oldRoot->right = derivate(oldRoot->right, x);
+            oldRoot->left = derive(oldRoot->left, x);
+            oldRoot->right = derive(oldRoot->right, x);
             if (node == this->root) {
                 this->root = node;
             }
@@ -242,8 +265,8 @@ Node *AST::derivate(Node *node, char x) {
             newParent->left = leftMult;
             newParent->right = rightMult;
             rightMult->left = oldRoot->left;
-            oldRoot->left = derivate(leftClone, x);
-            rightMult->right = derivate(rightClone, x);
+            oldRoot->left = derive(leftClone, x);
+            rightMult->right = derive(rightClone, x);
             
             newParent->print(); cout << endl;
 
@@ -271,7 +294,7 @@ Node *AST::derivate(Node *node, char x) {
             newParent->left = oldRoot->right;
             newParent->right = auxMult;
             auxMult->left = oldRoot;
-            auxMult->right = derivate(leftClone, x);
+            auxMult->right = derive(leftClone, x);
             oldRoot->right = newExp;
 
             if (node == this->root) {
@@ -284,6 +307,7 @@ Node *AST::derivate(Node *node, char x) {
             return nullptr;
         }
     }
+    // Derive a Variable Node
     else if (isNodeVariable(node)) {
         if (((NodeVariable *)node)->var == x) {
             Node *auxNode = new NodeNumber(1);
@@ -294,6 +318,7 @@ Node *AST::derivate(Node *node, char x) {
             return auxNode;
         }
     }
+    // Derive a Node Number. Spoiler: equal to zero
     else if (isNodeNumber(node)) {
         Node *auxNode = new NodeNumber(0);
         return auxNode;
@@ -303,6 +328,10 @@ Node *AST::derivate(Node *node, char x) {
     }
 }
 
+/// @brief Compare two Nodes and decides if their contents are equal.
+/// @param n1 Node
+/// @param n2 Node
+/// @return True if their contets are equal. False if are not.
 bool AST::equal(Node *n1, Node *n2) {
     if (isNodeOperation(n1) && isNodeOperation(n2)) {
         NodeOperation *aux1 = (NodeOperation *)n1;
@@ -325,6 +354,10 @@ bool AST::equal(Node *n1, Node *n2) {
     }
 }
 
+/// @brief Sort the Node leaving the NumberNode on the left 
+///        and VariableNode on the right.
+/// @param node Root Node.
+/// @return Node after sort all the child Nodes.
 Node *AST::sort(Node *node) {
     if (isNodeOperation(node)) {
         NodeOperation *auxNode = (NodeOperation *)node;
@@ -353,27 +386,10 @@ Node *AST::sort(Node *node) {
     }
 }
 
-void AST::deleteVarNode(Node *node, Node *parent) {
-    if (((NodeOperation *)parent)->left == node) {
-        delete node;
-        parent = ((NodeOperation *)parent)->right;
-    }
-    else {
-        delete node;
-        parent = ((NodeOperation *)parent)->left;
-    }
-}
-
-bool AST::isVarMultiply(Node *node, char x) {
-    if (isNodeOperation(node)) {
-        NodeOperation *auxOp = (NodeOperation *)node;
-        if (auxOp->operation == '*' && isNodeNumber(auxOp->left) && isNodeVariable(auxOp->right)) {
-            return (((NodeVariable *)auxOp->right)->var == x);
-        }
-    }
-    return false;
-}
-
+/// @brief Calculate the sum of the x variable out of multiply Nodes.
+/// @param node Root Node.
+/// @param x Variable to be added
+/// @return The result of adding all the x variables outside of multiply Nodes.
 int AST::countVar(Node *node, char x) {
     if (isNodeOperation(node)) {
         NodeOperation *auxNode = (NodeOperation *)node;
@@ -396,6 +412,9 @@ int AST::countVar(Node *node, char x) {
     return 0;
 }
 
+/// @brief Calculate the sum of all Number Nodes out of the multiply Nodes.
+/// @param node Root node.
+/// @return The sum of all Number Nodes out of multiply Nodes.
 int AST::sumLevelNumbers(Node *node) {
     if (isNodeOperation(node)) {
         NodeOperation *auxNode = (NodeOperation *)node;
@@ -409,6 +428,9 @@ int AST::sumLevelNumbers(Node *node) {
     return 0;
 }
 
+/// @brief Searches the first Number Node out of a multiply Node.
+/// @param node Root Node.
+/// @return First Number Node found.
 Node *AST::firstAddNumber(Node *node) {
     if (isNodeOperation(node)) {
         if (((NodeOperation *)node)->operation == '+') {
@@ -429,6 +451,12 @@ Node *AST::firstAddNumber(Node *node) {
     return nullptr;
 }
 
+/// @brief Reduce the AST by replace the first Number Node found in the AST
+///        out of multiply Nodes and eliminates the rest of Number Nodes.
+/// @param node Root Node.
+/// @param numNode First Number Node in the AST.
+/// @param sum Sum of the all Node Numbers.
+/// @return Root Node after reduce the AST.
 Node *AST::reduceAddNumbers(Node *node, Node *numNode, int sum) {
     node = evalRecursive(node);
     if (isNodeOperation(node)) {
@@ -468,10 +496,20 @@ Node *AST::reduceAddNumbers(Node *node, Node *numNode, int sum) {
     return node;
 }
 
+/// @brief Reduce the AST by replace the first Variable Node of x found in the AST
+///        out of multiply Nodes and eliminates the rest of Variables Nodes.
+/// @param node Root Node.
+/// @param varNode First Variable Node in the AST.
+/// @param n Sum of the all Node Numbers.
+/// @param x Variable to reduce.
+/// @return Root Node after reduce the AST.
 Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
     if (isNodeOperation(node)) {
         NodeOperation *auxNode = (NodeOperation *)node;
+        // Reduce cases
+        // 1. If operation is +
         if (auxNode->operation == '+') {
+            // 1.1. If left Node is x variable and not equal to first Variable Node
             if (isNodeVariable(auxNode->left) && auxNode->left != varNode) {
                 if (((NodeVariable *)auxNode->left)->var == x) {
                     if (auxNode == this->root) {
@@ -481,6 +519,7 @@ Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
                     return node;
                 }
             }
+            // 1.2. If right Node is x variable and not equal to first Variable Node
             else if (isNodeVariable(auxNode->right) && auxNode->right != varNode) {
                 if (((NodeVariable *)auxNode->right)->var == x) {
                     if (auxNode == this->root) {
@@ -490,6 +529,7 @@ Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
                     return node;
                 }
             }
+            // 1.3. If left Node is multiply Node and there's a number multiplying the x variable.
             else if (isNodeOperation(auxNode->left)) {
                 NodeOperation *auxOp = (NodeOperation *)auxNode->left;
                 if (auxOp->operation == '*' && isNodeNumber(auxOp->left) && isNodeVariable(auxOp->right)) {
@@ -501,6 +541,7 @@ Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
                     }
                 }
             }
+            // 1.4. If right Node is mupltiply Node and there's a number multiplying the x variable.
             else if (isNodeOperation(auxNode->right)) {
                 NodeOperation *auxOp = (NodeOperation *)auxNode->right;
                 if (auxOp->operation == '*' && isNodeNumber(auxOp->left) && isNodeVariable(auxOp->right)) {
@@ -512,10 +553,12 @@ Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
                     }
                 }
             }
+            // Continues to reducing the left and right child
             auxNode->left = reduceVariable(auxNode->left, varNode, n, x);
             auxNode->right = reduceVariable(auxNode->right, varNode, n, x);
             return auxNode;
         }
+        // If operation is another one (-, *, ^)
         else {
             auxNode->left = reduceVariable(auxNode->left, searchVariable(auxNode->left, x), countVar(auxNode->left, x), x);
             auxNode->right = reduceVariable(auxNode->right, searchVariable(auxNode->right, x), countVar(auxNode->right, x), x);
@@ -553,6 +596,10 @@ Node *AST::reduceVariable(Node *node, Node *varNode, int n, char x) {
     return node;
 }
 
+/// @brief Search the first add Variable Node of x out of multiply Node
+/// @param node Root Node.
+/// @param x Searched variable.
+/// @return First add Variable Node of x variable.
 Node *AST::searchVariable(Node *node, char x) {
     if (isNodeOperation(node)) {
         if (((NodeOperation *)node)->operation == '+') {
@@ -591,6 +638,10 @@ Node *AST::searchVariable(Node *node, char x) {
     return nullptr;
 }
 
+/// @brief Reduces the AST by adding the x variable and numbers.
+///        Applies the reduceVariable() and reduceAddNumbers() methods. 
+/// @param node Root node.
+/// @return Root node after reducing the AST.
 Node *AST::simplify(Node *node) {
     node = sort(node);
     Node *clonedNode = clone(node);
@@ -653,28 +704,23 @@ Node *AST::simplify(Node *node) {
                 auxNode->right = new NodeNumber(2);
                 return auxNode;
             }
-            // 3.2. Multiply by one
-            else if (isNodeNumber(auxNode->left)) {
-                cout << "multiply por 1...." << endl;
+            // 3.2. Multiply by one or zero on the left
+            if (isNodeNumber(auxNode->left)) {
                 if (((NodeNumber *)auxNode->left)->number == 1) {
                     node = auxNode->right;
                     return node;
                 }
+                else if (((NodeNumber *)auxNode->left)->number == 0) {
+                    return new NodeNumber(0);
+                }
             }
-            else if (isNodeNumber(auxNode->right)) {
+            // 3.3 Multiply by one or zero on the right
+            if (isNodeNumber(auxNode->right)) {
                 if (((NodeNumber *)auxNode->right)->number == 1) {
                     node = auxNode->left;
                     return node;
                 }
-            }
-            // 3.3. Multiply by zero
-            else if (isNodeNumber(auxNode->left)) {
-                if (((NodeNumber *)auxNode->left)->number == 0) {
-                    return new NodeNumber(0);
-                }
-            }
-            else if (isNodeNumber(auxNode->right)) {
-                if (((NodeNumber *)auxNode->right)->number == 0) {
+                else if (((NodeNumber *)auxNode->right)->number == 0) {
                     return new NodeNumber(0);
                 }
             }
@@ -683,12 +729,16 @@ Node *AST::simplify(Node *node) {
     return node;
 }
 
-
+/// @brief Clone the content in input node to a new node.
+/// @param node Node to clone.
+/// @return New Node with the same content of the cloned node.
 Node *AST::clone(Node *node) {
     if (isNodeOperation(node)) {
         NodeOperation* auxNode = new NodeOperation(((NodeOperation *)node)->operation);
         auxNode->left = clone(((NodeOperation *)node)->left);
         auxNode->right = clone(((NodeOperation *)node)->right);
+        auxNode->left->parent = auxNode;
+        auxNode->right->parent = auxNode;
         return auxNode;
     }
     else if (isNodeVariable(node)) {
@@ -704,6 +754,7 @@ Node *AST::clone(Node *node) {
     }
 }
 
+/// @brief Prints the AST as a polynomium
 void AST::printAST() { 
     this->root->print();
     cout << endl;

@@ -3,10 +3,13 @@
 
 using namespace std;
 
+/// @brief Constructor of MenuAST class that asignes a AST to the ast attribute.
+/// @param ast AST to asigned.
 MenuAST::MenuAST(AST *ast) {
     this->ast = ast;
 }
 
+/// @brief Console menu to interact with the AST and its methods.
 void MenuAST::runMenu() {
     bool quit = false;
     int option;
@@ -56,7 +59,7 @@ void MenuAST::runMenu() {
                 char x;
                 cout << "Enter the derivate variable: ";
                 cin >> x;
-                this->ast->root = this->ast->derivate(this->ast->root, x);
+                this->ast->root = this->ast->derive(this->ast->root, x);
                 break;
             }
             case 5:

@@ -1,6 +1,10 @@
 #ifndef NODE_H
 #define NODE_H
 
+/*
+    * Node class:
+    * This class is used to represent a Node in a AST, a binary tree.
+*/
 class Node {
     #define NUMBER 0
     #define OPERATOR 1
@@ -8,13 +12,17 @@ class Node {
     #define INVALID 3
 
     public:
+        // Attributes
         int type;
         Node *parent;
         bool visited;
 
+        // Methods
+        // Constructor and Destructor
         Node();
         ~Node();
-        int getType();
+
+        // Other methods
         virtual void print();
 };
 
