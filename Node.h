@@ -23,6 +23,9 @@ class Node {
         ~Node();
 
         // Other methods
+        bool isNodeOperation();
+        bool isNodeVariable();
+        bool isNodeNumber();
         virtual void print();
 };
 

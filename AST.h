@@ -27,9 +27,6 @@ class AST {
         bool isOperator(string token);
         bool isVariable(string token);
         bool isNumber(string token);
-        bool isNodeOperation(Node *node);
-        bool isNodeVariable(Node *node);
-        bool isNodeNumber(Node *node);
 
         bool equal(Node *n1, Node *n2);
         Node *clone(Node *node);
