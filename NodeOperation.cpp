@@ -40,6 +40,22 @@ NodeOperation::~NodeOperation() {
     }
 }
 
+/// @brief Clone the Node operation creating a new node.
+/// @return New Node with the same operation and children of the cloned node.
+NodeOperation *NodeOperation::clone() {
+    if (isNodeOperation()) {
+        NodeOperation* auxNode = new NodeOperation(this->operation);
+        auxNode->left = this->left->clone();
+        auxNode->right = this->right->clone();
+        auxNode->left->parent = auxNode;
+        auxNode->right->parent = auxNode;
+        return auxNode;
+    }
+    else {
+        return nullptr;
+    }
+}
+
 /// @brief Prints on screen the value of the Node with its children and operation.
 void NodeOperation::print() {
         cout << "(" ;

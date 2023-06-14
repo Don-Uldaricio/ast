@@ -26,7 +26,8 @@ class Node {
         bool isNodeOperation();
         bool isNodeVariable();
         bool isNodeNumber();
-        virtual void print();
+        virtual Node *clone() = 0;
+        virtual void print() = 0;
 };
 
 #endif

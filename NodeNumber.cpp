@@ -18,6 +18,19 @@ NodeNumber::~NodeNumber() {
     delete this;
 }
 
+/// @brief Clone the Node number creating a new node.
+/// @return New Node with the same number of the cloned node.
+NodeNumber *NodeNumber::clone() {
+    if (isNodeNumber()) {
+        NodeNumber *auxNode = new NodeNumber(this->number);
+        return auxNode;
+    }
+    else {
+        return nullptr;
+    }
+}
+
+
 /// @brief Prints on screen the number value of the Node.
 void NodeNumber::print() {
     cout << this->number;

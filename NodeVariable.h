@@ -19,5 +19,6 @@ public:
     ~NodeVariable();
 
     // Other methods
+    NodeVariable *clone();
     void print();
 };

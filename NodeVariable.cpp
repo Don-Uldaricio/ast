@@ -18,6 +18,18 @@ NodeVariable::~NodeVariable() {
     delete this;
 }
 
+/// @brief Clone the variable node creating a new node.
+/// @return New Node with the same variable of the cloned node.
+NodeVariable *NodeVariable::clone() {
+    if (isNodeVariable()) {
+        NodeVariable *auxNode = new NodeVariable(this->var);
+        return auxNode;
+    }
+    else {
+        return nullptr;
+    }
+}
+
 /// @brief Prints on screen the variable
 void NodeVariable::print() {
     cout << this->var;

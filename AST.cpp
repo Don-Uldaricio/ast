@@ -32,6 +32,12 @@ AST::AST(string fileName) {
 
     stack<NodeOperation*> pila;
 
+    // It initializes the array "vars" and the amount of variables in the file
+    nvars = 0;
+    for (int i = 0; i < 10; i++) {
+        this->vars[i] = '.';
+    }
+
     if (getline(file, line, '\n')) {
         ss << line;
         while(getline(ss, token, ' ')) {
@@ -50,7 +56,23 @@ AST::AST(string fileName) {
 
             }
             else if (isVariable(token)) {
-                char name= token[0];
+                char name = token[0];
+                // Verificate if variable is already in "vars" array
+                bool found = false;
+                int i = 0;
+                while (!found && i < 10) {
+                    if (name == this->vars[i]) {
+                        found = true;
+                    }
+                    else if (i == nvars) {
+                        this->vars[i] = name;
+                        found = true;
+                        nvars++;
+                    }
+                    else {
+                        i++;
+                    }
+                }
                 node = new NodeVariable(name);
             }
             // 2. If it's first Node it's root
@@ -225,12 +247,11 @@ Node *AST::derive(Node *node, char x) {
             return evalRecursive(oldRoot);
         }
         else if (op == '*') {
-            node->print(); cout << endl;
             NodeOperation *newParent = new NodeOperation('+');
             NodeOperation *leftMult = oldRoot;
             NodeOperation *rightMult = new NodeOperation('*');
-            Node *leftClone = clone(oldRoot->left);
-            Node *rightClone = clone(oldRoot->right);
+            Node *leftClone = oldRoot->left->clone();
+            Node *rightClone = oldRoot->right->clone();
 
             // Asign new parents
             newParent->parent = node->parent;
@@ -246,8 +267,6 @@ Node *AST::derive(Node *node, char x) {
             rightMult->left = oldRoot->left;
             oldRoot->left = derive(leftClone, x);
             rightMult->right = derive(rightClone, x);
-            
-            newParent->print(); cout << endl;
 
             if (node == this->root) {
                 this->root = newParent;
@@ -256,7 +275,7 @@ Node *AST::derive(Node *node, char x) {
             return evalRecursive(newParent);
         }
         else if (op == '^') {
-            Node *leftClone = clone(oldRoot->left);
+            Node *leftClone = oldRoot->left->clone();
             NodeOperation *newParent = new NodeOperation('*');
             NodeOperation *auxMult = new NodeOperation('*');
             NodeNumber *newExp = new NodeNumber((((NodeNumber *)oldRoot->right)->number) - 1);
@@ -623,16 +642,19 @@ Node *AST::searchVariable(Node *node, char x) {
 /// @return Root node after reducing the AST.
 Node *AST::simplify(Node *node) {
     node = sort(node);
-    Node *clonedNode = clone(node);
+    Node *clonedNode = node->clone();
     bool same = false;
     while (!same) {
-        node = reduceVariable(node, searchVariable(node, 'x'), countVar(node, 'x'), 'x');
+        for (int i = 0; i < this->nvars; i++) {
+            char v = this->vars[i];
+            node = reduceVariable(node, searchVariable(node, v), countVar(node, v), v);
+        }
         node = reduceAddNumbers(node, firstAddNumber(node), sumLevelNumbers(node));
         if (equal(clonedNode, node)) {
             same = true;
         }
         else {
-            clonedNode = clone(node);
+            clonedNode = node->clone();
         }
     }
     if (node->isNodeOperation()) {
@@ -706,31 +728,6 @@ Node *AST::simplify(Node *node) {
         }
     }
     return node;
-}
-
-/// @brief Clone the content in input node to a new node.
-/// @param node Node to clone.
-/// @return New Node with the same content of the cloned node.
-Node *AST::clone(Node *node) {
-    if (node->isNodeOperation()) {
-        NodeOperation* auxNode = new NodeOperation(((NodeOperation *)node)->operation);
-        auxNode->left = clone(((NodeOperation *)node)->left);
-        auxNode->right = clone(((NodeOperation *)node)->right);
-        auxNode->left->parent = auxNode;
-        auxNode->right->parent = auxNode;
-        return auxNode;
-    }
-    else if (node->isNodeVariable()) {
-        NodeVariable *auxNode = new NodeVariable(((NodeVariable *)node)->var);
-        return auxNode;
-    }
-    else if (node->isNodeNumber()) {
-        NodeNumber *auxNode = new NodeNumber(((NodeNumber *)node)->number);
-        return auxNode;
-    }
-    else {
-        return nullptr;
-    }
 }
 
 /// @brief Prints the AST as a polynomium

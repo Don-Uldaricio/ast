@@ -19,10 +19,8 @@ class MenuAST {
 
         // Methods
         // Constructor
-
         MenuAST(AST *ast);
 
         // Other methods
-
         void runMenu();
 };

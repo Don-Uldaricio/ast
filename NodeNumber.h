@@ -17,5 +17,6 @@ public:
     ~NodeNumber();
 
     // Other methods
+    NodeNumber *clone();
     void print();
 };

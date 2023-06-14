@@ -18,6 +18,8 @@ class AST {
     public:
         // Atributtes
         Node *root;
+        char vars[10]; // Max 10 variables
+        int nvars;
 
         // Methods
         // Constructor
@@ -29,7 +31,6 @@ class AST {
         bool isNumber(string token);
 
         bool equal(Node *n1, Node *n2);
-        Node *clone(Node *node);
         Node *sort(Node *node);
         Node *evalRecursive(Node *node);
         Node *replace(Node *node, char *variables, int *values, int n);

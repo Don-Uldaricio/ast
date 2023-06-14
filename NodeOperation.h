@@ -23,5 +23,6 @@ class NodeOperation : public Node {
         ~NodeOperation();
 
         // Other methods
+        NodeOperation *clone();
         void print();
 };
