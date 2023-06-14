@@ -19,7 +19,7 @@ void MenuAST::runMenu() {
         cout << endl << "Actual AST:\n";
         this->ast->printAST();
         cout << endl;
-        cout << "1. Print tree from" << endl;
+        cout << "1. Print tree form" << endl;
         cout << "2. Evaluate AST" << endl;
         cout << "3. Replace variables" << endl;
         cout << "4. Derivate" << endl;
@@ -45,19 +45,23 @@ void MenuAST::runMenu() {
                     values[i] = value;
                 }
                 this->ast->root = this->ast->replace(this->ast->root, this->ast->vars, values, this->ast->nvars);
+                cout << "Replacing..." << endl;
                 break;
             }
             case 4: {
                 char x;
                 cout << "Enter the variable to derive: ";
                 cin >> x;
+                cout << "Deriving..." << endl;
                 this->ast->root = this->ast->derive(this->ast->root, x);
                 break;
             }
             case 5:
                 this->ast->root = this->ast->simplify(this->ast->root);
+                cout << "Simplifying..." << endl;
                 break;
             case 6:
+            cout << "Backing to original AST..." << endl;
                 this->ast->root = backupAST;
                 break;
             case 7:
